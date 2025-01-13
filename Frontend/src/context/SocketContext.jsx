@@ -15,25 +15,35 @@ export const SocketProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
+    // Check if the user is authenticated
     if (authUser) {
-      const socket = io(process.env.REACT_APP_BACKEND_URL || "http://localhost:3005", {
-  query: {
-    userId: authUser.user._id,
-  },
-});
+      // Initialize socket connection only when authUser exists
+      const socketConnection = io(process.env.REACT_APP_BACKEND_URL || "http://localhost:3005", {
+        query: {
+          userId: authUser.user._id,
+        },
+      });
 
-      setSocket(socket);
-      socket.on("getOnlineUsers", (users) => {
+      setSocket(socketConnection);
+
+      // Listen for updates on online users
+      socketConnection.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
       });
-      return () => socket.close();
+
+      // Cleanup: Close socket connection when component unmounts or user changes
+      return () => {
+        socketConnection.close();
+      };
     } else {
+      // Cleanup if user logs out or is not authenticated
       if (socket) {
         socket.close();
         setSocket(null);
       }
     }
   }, [authUser]);
+
   return (
     <socketContext.Provider value={{ socket, onlineUsers }}>
       {children}
