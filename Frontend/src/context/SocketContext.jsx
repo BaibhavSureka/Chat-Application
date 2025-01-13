@@ -16,11 +16,12 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (authUser) {
-      const socket = io(`${process.env.REACT_APP_BACKEND_URL}`, {
+      const socket = io(process.env.REACT_APP_BACKEND_URL || "http://localhost:3005", {
   query: {
     userId: authUser.user._id,
   },
 });
+
       setSocket(socket);
       socket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
