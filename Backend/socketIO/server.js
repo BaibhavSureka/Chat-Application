@@ -4,33 +4,36 @@ import express from "express";
 
 const app = express();
 const server = http.createServer(app);
+
+// Update CORS to allow connections from Vercel frontend
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:4002",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",  // Environment variable for frontend URL
     methods: ["GET", "POST"],
   },
 });
 
-// real time message goes here
+const users = {};
+
+// Function to get the receiver's socket ID
 export const getReceiverSocketId = (receiverId) => {
   return users[receiverId];
 };
 
-const users = {};
-
-// use to listen events on server side
+// Listening for connection events
 io.on("connection", (socket) => {
   console.log("a user connected", socket.id);
   const userId = socket.handshake.query.userId;
+  
   if (userId) {
     users[userId] = socket.id;
-    console.log("hello", users);
+    console.log("Users:", users);
   }
 
-  // used to send the events  to all the connected clients.
+  // Emit online users
   io.emit("getOnlineUsers", Object.keys(users));
 
-  // used to listen events client side event emitted by server side (client & server)
+  // Handle disconnect
   socket.on("disconnect", () => {
     console.log("a user disconnected", socket.id);
     delete users[userId];
